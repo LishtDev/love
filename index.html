@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System.love.init()</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600&family=Orbitron:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0f;
+            color: #ff6b9d;
+            font-family: 'Fira Code', monospace;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Matrix rain effect background */
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.15;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Glitch effect for title */
+        .glitch {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            text-align: center;
+            color: #ff6b9d;
+            text-shadow: 2px 2px #00d4ff, -2px -2px #ff00ff;
+            animation: glitch 2s infinite;
+            margin-bottom: 10px;
+            letter-spacing: 3px;
+        }
+
+        @keyframes glitch {
+            0%, 100% { text-shadow: 2px 2px #00d4ff, -2px -2px #ff00ff; }
+            25% { text-shadow: -2px 2px #00d4ff, 2px -2px #ff00ff; }
+            50% { text-shadow: 2px -2px #00d4ff, -2px 2px #ff00ff; }
+            75% { text-shadow: -2px -2px #00d4ff, 2px 2px #ff00ff; }
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #00d4ff;
+            font-size: 1rem;
+            margin-bottom: 40px;
+            opacity: 0.8;
+        }
+
+        /* Terminal window */
+        .terminal {
+            background: rgba(10, 10, 15, 0.9);
+            border: 1px solid #ff6b9d;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(255, 107, 157, 0.2), inset 0 0 30px rgba(255, 107, 157, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        .terminal-header {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 107, 157, 0.3);
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot.red { background: #ff5f56; }
+        .dot.yellow { background: #ffbd2e; }
+        .dot.green { background: #27c93f; }
+
+        .typing-text {
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 20px;
+            background: #ff6b9d;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .highlight {
+            color: #00d4ff;
+            font-weight: 600;
+        }
+
+        .heart {
+            color: #ff1744;
+            display: inline-block;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+
+        /* Love stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 107, 157, 0.1);
+            border: 1px solid rgba(255, 107, 157, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 107, 157, 0.3);
+            border-color: #ff6b9d;
+        }
+
+        .stat-number {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: #00d4ff;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #ff6b9d;
+            margin-top: 5px;
+        }
+
+        /* Portfolio link */
+        .portfolio-section {
+            text-align: center;
+            margin: 40px 0;
+            padding: 30px;
+            border: 2px dashed #ff0a0a;
+            border-radius: 15px;
+            background: rgba(192, 26, 26, 0.41);
+        }
+
+        .portfolio-btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 15px 40px;
+            background: linear-gradient(45deg, #000000, #e81304);
+            color: #ebebf3;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-family: 'Fira Code', monospace;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .portfolio-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .portfolio-btn:hover::before {
+            left: 100%;
+        }
+
+        .portfolio-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(255, 107, 157, 0.6);
+        }
+
+        /* Secret message decoder */
+        .decoder {
+            margin-top: 40px;
+            padding: 25px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            border: 1px solid #2cdb04;
+        }
+
+        .decoder h3 {
+            color: #2bf907;
+            margin-bottom: 15px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .encoded-msg {
+            font-size: 0.9rem;
+            color: #04e000;
+            word-break: break-all;
+            line-height: 1.6;
+        }
+
+        .decoded-msg {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(90, 243, 128, 0.1);
+            border-radius: 5px;
+            color: #05ec01;
+            font-size: 1.2rem;
+            min-height: 50px;
+        }
+
+        .decode-btn {
+            margin-top: 15px;
+            padding: 10px 25px;
+            background: transparent;
+            border: 2px solid #00ff0d;
+            color: #09e910;
+            font-family: 'Fira Code', monospace;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .decode-btn:hover {
+            background: #00d4ff;
+            color: #0a0a0f;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+
+        .footer .heart {
+            animation: heartbeat 1s infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .glitch { font-size: 2rem; }
+            .terminal { padding: 20px; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Scanline effect */
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="scanline"></div>
+
+    <div class="container">
+        <h1 class="glitch">HACKING...!!!</h1>
+        <p class="subtitle">> Votre cœur vient d'être hacké par LISHT...</p>
+
+        <div class="terminal">
+            <div class="terminal-header">
+                <div class="dot red"></div>
+                <div class="dot yellow"></div>
+                <div class="dot green"></div>
+                <span style="margin-left: 10px; color: rgba(255,107,157,0.6); font-size: 0.8rem;">terminal — love.exe</span>
+            </div>
+            
+            <div class="typing-text" id="typing-text"></div>
+            <span class="cursor"></span>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-number" id="days">0</span>
+                <div class="stat-label">Durée</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="hours">0</span>
+                <div class="stat-label">Heures de bonheur</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">∞</span>
+                <div class="stat-label">Amour détecté</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">100%</span>
+                <div class="stat-label">Compatibilité</div>
+            </div>
+        </div>
+
+        <div class="portfolio-section">
+            <h2 style="color: #00d4ff; margin-bottom: 10px; font-family: 'Orbitron';">> Mon Portfolio</h2>
+            <p style="color: rgba(255,255,255,0.7); margin-bottom: 20px;">
+                Si tu veux en savoir plus sur moi<br>
+                <span style="color: #ff6b9d;"> .....</span>
+            </p>
+            <a href="https://lishtdev.github.io/LishtPortfolio/" target="_blank" class="portfolio-btn">
+                <span style="margin-right: 8px;">⚡</span> Ouvrir le Portfolio
+            </a>
+        </div>
+
+        <div class="decoder">
+            <h3>> MESSAGE_CHIFFRÉ.exe</h3>
+            <div class="encoded-msg" id="encoded">
+                01010011   01101001   00100000   01101100   01100001
+                00100000   01100100   01101111   01110101   01100011
+                01100101   01110101   01110010   00100000   01100001
+                01110110   01100001   01101001   01110100   00100000
+                01110101   01101110   00100000   01110000   01110010
+                11000011   10101001   01101110   01101111   01101101
+                00101100   01101010   01100101   00100000   01100011
+                01110010   01101111   01101001   01110011   00100000
+                01110011   01101001   01101110   01100011   11000011
+                10101000   01110010   01100101   01101101   01100101
+                01101110   01110100   00100000   01110001   01110101
+                11100010   10000000   10011001   01100101   01101100
+                01101100   01100101   00100000   01110000   01101111
+                01110010   01110100   01100101   01110010   01100001
+                01101001   01110100   00100000   01101100   01100101
+                00100000   01110100   01101001   01100101   01101110
+                00101110
+                
+            <span class="heart">❤</span>
+            </div>
+            <button class="decode-btn" onclick="decodeMessage()">> Décrypter le message</button>
+            <div class="decoded-msg" id="decoded"></div>
+        </div>
+
+        <div class="footer">
+            <p>Built with <span class="heart">❤</span> and a lot of code</p>
+            <p style="margin-top: 10px; font-size: 0.8rem; opacity: 0.6;">
+                > while(true) { love++; } // Forever
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Matrix rain effect
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+
+        for (let i = 0; i < columns; i++) {
+            drops[i] = Math.random() * -100;
+        }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(10, 10, 15, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#ff6b9d';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 35);
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Typing effect
+        const text = `
+> Initialisation du protocole d'amour...<br>
+> Chargement des souvenirs partagés... [OK]<br>
+> Analyse des émotions... [100%]<br>
+> Connexion avec ton cœur... [ÉTABLIE]<br>
+
+Il y a des gens qu’on remarque…
+et puis il y a toi,
+qu’on ressent un peu comme une musique douce
+dans une pièce devenue trop silencieuse.❤❤❤<br>
+
+Tu as ce talent rare de rendre les choses plus jolies
+sans même essayer.
+Même le temps semble ralentir quand tu parles,
+comme s’il voulait écouter lui aussi❤❤❤.<br>
+
+Franchement, ton sourire devrait être classé monument historique.
+Parce qu’il provoque des catastrophes émotionnelles assez sérieuses.
+Un simple “salut” de toi
+et mon cerveau oublie soudainement toutes ses mises à jour❤❤❤.<br>
+
+Mais au-delà de ta beauté,
+c’est ta manière d’exister qui touche.
+Tu ressembles à ces lumières qu’on voit tard le soir
+quand on pense que la journée n’avait plus rien de beau à offrir❤❤❤<br>
+
+Et je crois que le plus dangereux chez toi,
+ce n’est pas tes yeux,
+ni ta voix,
+ni même ton sourire…❤❤❤<br>
+
+C’est cette sensation étrange de paix
+que tu laisses dans le cœur des autres.
+Comme si, pendant quelques secondes,
+tout allait enfin bien...❤❤❤`;
+
+        let i = 0;
+        const typingElement = document.getElementById('typing-text');
+
+        function typeWriter() {
+            if (i < text.length) {
+                if (text.substring(i, i + 4) === '<spa' || text.substring(i, i + 3) === '<br') {
+                    const endTag = text.indexOf('>', i) + 1;
+                    typingElement.innerHTML += text.substring(i, endTag);
+                    i = endTag;
+                } else {
+                    typingElement.innerHTML += text.charAt(i);
+                    i++;
+                }
+                setTimeout(typeWriter, 30);
+            }
+        }
+
+        // Start typing after a short delay
+        setTimeout(typeWriter, 1000);
+
+        // Counter animation
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            const range = end - start;
+            const increment = end > start ? 1 : -1;
+            const stepTime = Math.abs(Math.floor(duration / range));
+            let current = start;
+
+            const timer = setInterval(() => {
+                current += increment;
+                obj.innerHTML = current;
+                if (current == end) {
+                    clearInterval(timer);
+                }
+            }, stepTime);
+        }
+
+        // Set your anniversary date here (YYYY, MM-1, DD)
+        const startDate = new Date(2023, 0, 1); // Example: 1er janvier 2023
+        const now = new Date();
+        const diffTime = Math.abs(now - startDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+
+        setTimeout(() => {
+            animateValue("days", 0, diffDays, 2000);
+            animateValue("hours", 0, diffHours, 2000);
+        }, 3000);
+
+        // Decode message
+        function decodeMessage() {
+            const msg = "Si la douceur avait un prénom,je crois sincèrement qu’elle porterait le tien. 🌙❤";
+            const decodedElement = document.getElementById('decoded');
+            let j = 0;
+            
+            decodedElement.innerHTML = '';
+            
+            const decodeInterval = setInterval(() => {
+                if (j < msg.length) {
+                    decodedElement.innerHTML += msg.charAt(j);
+                    j++;
+                } else {
+                    clearInterval(decodeInterval);
+                    decodedElement.innerHTML += ' <span class="heart">❤</span>';
+                }
+            }, 50);
+        }
+    </script>
+</body>
+</html>
